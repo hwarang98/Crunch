@@ -6,6 +6,8 @@
 #include "Chracter/CCharacter.h"
 #include "CPlayerCharacter.generated.h"
 
+class UInputAction;
+class UInputMappingContext;
 class UCameraComponent;
 class USpringArmComponent;
 /**
@@ -18,6 +20,8 @@ class ACPlayerCharacter : public ACCharacter
 
 public:
 	ACPlayerCharacter();
+	virtual void PawnClientRestart() override;
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 private:
 	UPROPERTY(VisibleDefaultsOnly, Category = "View")
@@ -26,4 +30,9 @@ private:
 	UPROPERTY(VisibleDefaultsOnly, Category = "View")
 	UCameraComponent* ViewCamera;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputMappingContext* GameplayInputMappingContext;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* JumpInputAction;
 };
