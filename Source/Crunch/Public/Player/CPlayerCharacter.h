@@ -3,9 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Chracter/CCharacter.h"
+#include "Character/CCharacter.h"
 #include "CPlayerCharacter.generated.h"
 
+struct FInputActionValue;
 class UInputAction;
 class UInputMappingContext;
 class UCameraComponent;
@@ -34,5 +35,19 @@ private:
 	UInputMappingContext* GameplayInputMappingContext;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* LookInputAction;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputAction* JumpInputAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* MoveInputAction;
+
+	void HandleLoopInput(const FInputActionValue& InputActionValue);
+	void HandleMoveInput(const FInputActionValue& InputActionValue);
+	FVector2D GetInputActionValue(const FInputActionValue& InputActionValue);
+
+	FVector GetLookRightDirection() const;
+	FVector GetLookForwardDirection() const;
+	FVector GetMoveForwardDirection() const;
 };

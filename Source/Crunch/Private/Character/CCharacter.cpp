@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Chracter/CCharacter.h"
+#include "Character/CCharacter.h"
 #include "Components/SkeletalMeshComponent.h"
 
 // Sets default values
