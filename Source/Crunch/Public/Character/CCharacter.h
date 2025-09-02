@@ -7,6 +7,7 @@
 #include "AbilitySystemInterface.h"
 #include "CCharacter.generated.h"
 
+class UWidgetComponent;
 class UCAttributeSet;
 class UCAbilitySystemComponent;
 
@@ -20,6 +21,10 @@ public:
 	ACCharacter();
 	void ServerSideInit();
 	void ClientSideInit();
+	bool IsLocallyControlledByPlayer() const;
+
+	// 서버에서만 호출
+	virtual void PossessedBy(AController* NewController) override;
 	
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -30,9 +35,27 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+#pragma region Gameplay Ability System
 	UPROPERTY(VisibleDefaultsOnly, Category = "Gameplay Ability")
 	UCAbilitySystemComponent* AbilitySystemComponent;
 
 	UPROPERTY()
 	UCAttributeSet* CAttributeSet;
+#pragma endregion
+
+#pragma region UI
+	UPROPERTY(VisibleDefaultsOnly, Category = "UI")
+	UWidgetComponent* OverHeadWidgetComponent;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	float HeadStatGaugeVisibilityCheckUpdateGap = 1.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	float HeadStatGaugeVisibilityRangeSquared = 10000000.f;
+
+	FTimerHandle HeadStatGaugeVisibilityUpdateTimerHandle;
+
+	void UpdateHeadGaugeVisibility();
+	void ConfigureOverHeadStatusWidget();
+#pragma endregion
 };

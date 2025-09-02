@@ -43,7 +43,6 @@ void UValueGauge::SetValue(float NewValue, float NewMaxValue)
 	
 	if (NewMaxValue == 0.f)
 	{
-		Debug::Print(TEXT("Value Guage"), *GetName());
 		return;
 	}
 
