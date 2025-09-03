@@ -19,6 +19,7 @@ public:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData);
 	static FGameplayTag GetComboChangedEventTag();
 	static FGameplayTag GetComboChangedEventEndTag();
+	static FGameplayTag GetComboTargetEventTag();
 
 private:
 	void SetupWaitComboInputPress();
@@ -30,10 +31,22 @@ private:
 	void ComboChangedEventReceived(FGameplayEventData GameplayEventData);
 
 	UFUNCTION()
+	void DoDamage(FGameplayEventData GameplayEventData);
+
+	UFUNCTION()
 	void HandleInputPress(float TimeWaited);
 	
 	UFUNCTION()
 	void TryCommitCombo();
+
+	UPROPERTY(EditAnywhere, Category = "Attack | Trace Settings")
+	float SphereSweepRadius = 30.f;
+	
+	UPROPERTY(EditAnywhere, Category = "Attack | Trace Settings")
+	bool bDrawDebug = true;
+	
+	UPROPERTY(EditAnywhere, Category = "Attack | Trace Settings")
+	bool bIgnoreSelf = true;
 	
 	FName NextComboName;
 };

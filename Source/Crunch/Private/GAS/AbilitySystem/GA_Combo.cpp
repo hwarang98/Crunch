@@ -2,12 +2,12 @@
 
 
 #include "GAS/AbilitySystem/GA_Combo.h"
-#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Gas/Statics/CAbilitySystemStatics.h"
+#include "GameplayTagsManager.h"
+#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Abilities/Tasks/AbilityTask_WaitInputPress.h"
 #include "DebugHelper.h"
-#include "GameplayTagsManager.h"
 
 UGA_Combo::UGA_Combo()
 {
@@ -42,7 +42,15 @@ void UGA_Combo::ActivateAbility(
 		WaitComboChangeEventTask->ReadyForActivation();
 	}
 
+	if (K2_HasAuthority())
+	{
+		UAbilityTask_WaitGameplayEvent* WaitTargetingEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, GetComboTargetEventTag());
+		WaitTargetingEventTask->EventReceived.AddDynamic(this, &ThisClass::DoDamage);
+		WaitTargetingEventTask->ReadyForActivation();
+	}
 	SetupWaitComboInputPress();
+	
+
 }
 
 FGameplayTag UGA_Combo::GetComboChangedEventTag()
@@ -53,6 +61,11 @@ FGameplayTag UGA_Combo::GetComboChangedEventTag()
 FGameplayTag UGA_Combo::GetComboChangedEventEndTag()
 {
 	return FGameplayTag::RequestGameplayTag("Ability.Combo.Change.End");
+}
+
+FGameplayTag UGA_Combo::GetComboTargetEventTag()
+{
+	return FGameplayTag::RequestGameplayTag("Ability.Combo.Damage");
 }
 
 void UGA_Combo::SetupWaitComboInputPress()
@@ -78,6 +91,11 @@ void UGA_Combo::ComboChangedEventReceived(FGameplayEventData GameplayEventData)
 	NextComboName = TagNames.Last();
 
 	Debug::Print(TEXT("Next Combo Is Now: "), *NextComboName.ToString());
+}
+
+void UGA_Combo::DoDamage(FGameplayEventData GameplayEventData)
+{
+	TArray<FHitResult> HitResult = GetHitResultFromSweepLocationTargetData(GameplayEventData.TargetData, SphereSweepRadius, bDrawDebug, bIgnoreSelf);
 }
 
 void UGA_Combo::HandleInputPress(float TimeWaited)
