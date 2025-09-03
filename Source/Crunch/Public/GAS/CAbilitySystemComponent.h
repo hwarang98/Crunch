@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
+#include "Types/CGameAbilityTypes.h"
 #include "CAbilitySystemComponent.generated.h"
 
 /**
@@ -16,8 +17,15 @@ class CRUNCH_API UCAbilitySystemComponent : public UAbilitySystemComponent
 
 public:
 	void ApplyInitialEffects();
+	void GiveInitialAbilities();
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "Gameplay Effect")
 	TArray<TSubclassOf<UGameplayEffect>> InitialEffects;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Gameplay Ability")
+	TMap<EAbilityInputID, TSubclassOf<UGameplayAbility>> Abilities;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Gameplay Ability")
+	TMap<EAbilityInputID, TSubclassOf<UGameplayAbility>> BasicAbilities;
 };

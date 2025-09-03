@@ -16,3 +16,21 @@ void UCAbilitySystemComponent::ApplyInitialEffects()
 		ApplyGameplayEffectSpecToSelf(EffectSpec);
 	}
 }
+
+void UCAbilitySystemComponent::GiveInitialAbilities()
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority())
+	{
+		return;
+	}
+	
+	for (const TPair<EAbilityInputID, TSubclassOf<UGameplayAbility>>& AbilityPair : Abilities)
+	{
+		GiveAbility(FGameplayAbilitySpec(AbilityPair.Value, 0,  static_cast<int32>(AbilityPair.Key), nullptr));
+	}
+
+	for (const TPair<EAbilityInputID, TSubclassOf<UGameplayAbility>>& BaseAbilityPair : BasicAbilities)
+	{
+		GiveAbility(FGameplayAbilitySpec(BaseAbilityPair.Value, 1, static_cast<int32>(BaseAbilityPair.Key), nullptr));
+	}
+}

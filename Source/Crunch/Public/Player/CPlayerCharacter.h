@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Character/CCharacter.h"
+#include "GAS/Types/CGameAbilityTypes.h"
 #include "CPlayerCharacter.generated.h"
 
 struct FInputActionValue;
@@ -30,6 +31,8 @@ private:
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "View")
 	UCameraComponent* ViewCamera;
+
+#pragma region Input
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputMappingContext* GameplayInputMappingContext;
@@ -42,9 +45,15 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputAction* MoveInputAction;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TMap<EAbilityInputID, UInputAction*> GameplayAbilityInputActions;
+
+#pragma endregion 
 
 	void HandleLoopInput(const FInputActionValue& InputActionValue);
 	void HandleMoveInput(const FInputActionValue& InputActionValue);
+	void HandleAbilityInput(const FInputActionValue& InputActionValue, EAbilityInputID InputID);
 	FVector2D GetInputActionValue(const FInputActionValue& InputActionValue);
 
 	FVector GetLookRightDirection() const;
