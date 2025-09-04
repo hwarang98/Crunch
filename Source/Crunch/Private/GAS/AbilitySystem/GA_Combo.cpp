@@ -4,7 +4,7 @@
 #include "GAS/AbilitySystem/GA_Combo.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
-#include "Gas/Statics/CAbilitySystemStatics.h"
+#include "CGameplayTags.h"
 #include "GameplayTagsManager.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
@@ -13,8 +13,8 @@
 
 UGA_Combo::UGA_Combo()
 {
-	AbilityTags.AddTag(UCAbilitySystemStatics::GetBasicAttackAbilityTag());
-	BlockAbilitiesWithTag.AddTag(UCAbilitySystemStatics::GetBasicAttackAbilityTag());
+	AbilityTags.AddTag(CGameplayTags::Ability_BasicAttack);
+	BlockAbilitiesWithTag.AddTag(CGameplayTags::Ability_BasicAttack);
 }
 
 void UGA_Combo::ActivateAbility(
@@ -38,36 +38,21 @@ void UGA_Combo::ActivateAbility(
 		PlayComboMontageTask->OnCompleted.AddDynamic(this, &ThisClass::K2_EndAbility);
 		PlayComboMontageTask->OnInterrupted.AddDynamic(this, &ThisClass::K2_EndAbility);
 		PlayComboMontageTask->ReadyForActivation();
-
-		UAbilityTask_WaitGameplayEvent* WaitComboChangeEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, GetComboChangedEventTag(), nullptr, false, false);
+		
+		UAbilityTask_WaitGameplayEvent* WaitComboChangeEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, CGameplayTags::Ability_Combo_Change, nullptr, false, false);
 		WaitComboChangeEventTask->EventReceived.AddDynamic(this, &ThisClass::ComboChangedEventReceived);
 		WaitComboChangeEventTask->ReadyForActivation();
 	}
 
 	if (K2_HasAuthority())
 	{
-		UAbilityTask_WaitGameplayEvent* WaitTargetingEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, GetComboTargetEventTag());
+		UAbilityTask_WaitGameplayEvent* WaitTargetingEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, CGameplayTags::Ability_Combo_Damage);
 		WaitTargetingEventTask->EventReceived.AddDynamic(this, &ThisClass::DoDamage);
 		WaitTargetingEventTask->ReadyForActivation();
 	}
 	SetupWaitComboInputPress();
 	
 
-}
-
-FGameplayTag UGA_Combo::GetComboChangedEventTag()
-{
-	return FGameplayTag::RequestGameplayTag("Ability.Combo.Change");
-}
-
-FGameplayTag UGA_Combo::GetComboChangedEventEndTag()
-{
-	return FGameplayTag::RequestGameplayTag("Ability.Combo.Change.End");
-}
-
-FGameplayTag UGA_Combo::GetComboTargetEventTag()
-{
-	return FGameplayTag::RequestGameplayTag("Ability.Combo.Damage");
 }
 
 void UGA_Combo::SetupWaitComboInputPress()
@@ -81,7 +66,7 @@ void UGA_Combo::ComboChangedEventReceived(FGameplayEventData GameplayEventData)
 {
 	FGameplayTag EventTag = GameplayEventData.EventTag;
 
-	if (EventTag == GetComboChangedEventEndTag())
+	if (EventTag == CGameplayTags::Ability_Combo_Change_End)
 	{
 		NextComboName = NAME_None;
 		return;
@@ -98,8 +83,8 @@ void UGA_Combo::DoDamage(FGameplayEventData GameplayEventData)
 
 	for (const FHitResult& HitResult: HitResults)
 	{
-		TSubclassOf<UGameplayEffect> GameplayEffect = GetDamageEffectForCurrentCombo();
-		FGameplayEffectSpecHandle EffectSpecHandle = MakeOutgoingGameplayEffectSpec(GameplayEffect, GetAbilityLevel(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo()));
+		const TSubclassOf<UGameplayEffect> GameplayEffect = GetDamageEffectForCurrentCombo();
+		const FGameplayEffectSpecHandle EffectSpecHandle = MakeOutgoingGameplayEffectSpec(GameplayEffect, GetAbilityLevel(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo()));
 
 		FGameplayEffectContextHandle EffectContextHandle = MakeEffectContext(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo());
 		EffectContextHandle.AddHitResult(HitResult);
