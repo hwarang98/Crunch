@@ -24,6 +24,7 @@ TArray<FHitResult> UCGameplayAbility::GetHitResultFromSweepLocationTargetData(
 ) const
 {
 	TArray<FHitResult> OutResult;
+	TSet<AActor*> HitActors;
 
 	for (const TSharedPtr<FGameplayAbilityTargetData> TargetData : TargetDataHandle.Data)
 	{
@@ -55,7 +56,16 @@ TArray<FHitResult> UCGameplayAbility::GetHitResultFromSweepLocationTargetData(
 			HitResults,
 			false
 		);
-		
+
+		for (const FHitResult& HitResult : HitResults)
+		{
+			if (HitActors.Contains(HitResult.GetActor()))
+			{
+				continue;
+			}
+			HitActors.Add(HitResult.GetActor());
+			OutResult.Add(HitResult);
+		}
 	}
 	return OutResult;
 }

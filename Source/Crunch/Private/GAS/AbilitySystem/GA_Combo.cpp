@@ -2,6 +2,8 @@
 
 
 #include "GAS/AbilitySystem/GA_Combo.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
 #include "Gas/Statics/CAbilitySystemStatics.h"
 #include "GameplayTagsManager.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
@@ -82,20 +84,36 @@ void UGA_Combo::ComboChangedEventReceived(FGameplayEventData GameplayEventData)
 	if (EventTag == GetComboChangedEventEndTag())
 	{
 		NextComboName = NAME_None;
-		Debug::Print(TEXT("Next Combo is cleared"));
 		return;
 	}
 
 	TArray<FName> TagNames;
 	UGameplayTagsManager::Get().SplitGameplayTagFName(EventTag, TagNames);
 	NextComboName = TagNames.Last();
-
-	Debug::Print(TEXT("Next Combo Is Now: "), *NextComboName.ToString());
 }
 
 void UGA_Combo::DoDamage(FGameplayEventData GameplayEventData)
 {
-	TArray<FHitResult> HitResult = GetHitResultFromSweepLocationTargetData(GameplayEventData.TargetData, SphereSweepRadius, bDrawDebug, bIgnoreSelf);
+	TArray<FHitResult> HitResults = GetHitResultFromSweepLocationTargetData(GameplayEventData.TargetData, SphereSweepRadius, bDrawDebug, bIgnoreSelf);
+
+	for (const FHitResult& HitResult: HitResults)
+	{
+		TSubclassOf<UGameplayEffect> GameplayEffect = GetDamageEffectForCurrentCombo();
+		FGameplayEffectSpecHandle EffectSpecHandle = MakeOutgoingGameplayEffectSpec(GameplayEffect, GetAbilityLevel(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo()));
+
+		FGameplayEffectContextHandle EffectContextHandle = MakeEffectContext(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo());
+		EffectContextHandle.AddHitResult(HitResult);
+
+		EffectSpecHandle.Data->SetContext(EffectContextHandle);
+
+		ApplyGameplayEffectSpecToTarget(
+			GetCurrentAbilitySpecHandle(),
+			CurrentActorInfo,
+			CurrentActivationInfo,
+			EffectSpecHandle,
+			UAbilitySystemBlueprintLibrary::AbilityTargetDataFromActor(HitResult.GetActor())
+		);
+	}
 }
 
 void UGA_Combo::HandleInputPress(float TimeWaited)
@@ -118,5 +136,22 @@ void UGA_Combo::TryCommitCombo()
 	}
 
 	OwnerAnimInstance->Montage_SetNextSection(OwnerAnimInstance->Montage_GetCurrentSection(ComboMontage), NextComboName, ComboMontage);
+}
+
+TSubclassOf<UGameplayEffect> UGA_Combo::GetDamageEffectForCurrentCombo() const
+{
+	UAnimInstance* OwnerAnimInstance = GetOwnerAnimInstance();
+
+	if (OwnerAnimInstance)
+	{
+		FName CurrentSectionName = OwnerAnimInstance->Montage_GetCurrentSection(ComboMontage);
+		
+		if (const TSubclassOf<UGameplayEffect>* FoundEffectPrt = DamageEffectMap.Find(CurrentSectionName))
+		{
+			return *FoundEffectPrt;
+		}
+		
+	}
+	return DefaultDamageEffect;
 }
 

@@ -26,6 +26,21 @@ private:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	UAnimMontage* ComboMontage;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Gameplay Effect")
+	TMap<FName, TSubclassOf<UGameplayEffect>> DamageEffectMap;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Gameplay Effect")
+	TSubclassOf<UGameplayEffect> DefaultDamageEffect;
+
+	UPROPERTY(EditAnywhere, Category = "Attack | Trace Settings")
+	float SphereSweepRadius = 30.f;
+	
+	UPROPERTY(EditAnywhere, Category = "Attack | Trace Settings")
+	bool bDrawDebug = true;
+	
+	UPROPERTY(EditAnywhere, Category = "Attack | Trace Settings")
+	bool bIgnoreSelf = true;
 
 	UFUNCTION()
 	void ComboChangedEventReceived(FGameplayEventData GameplayEventData);
@@ -38,15 +53,8 @@ private:
 	
 	UFUNCTION()
 	void TryCommitCombo();
-
-	UPROPERTY(EditAnywhere, Category = "Attack | Trace Settings")
-	float SphereSweepRadius = 30.f;
-	
-	UPROPERTY(EditAnywhere, Category = "Attack | Trace Settings")
-	bool bDrawDebug = true;
-	
-	UPROPERTY(EditAnywhere, Category = "Attack | Trace Settings")
-	bool bIgnoreSelf = true;
 	
 	FName NextComboName;
+
+	TSubclassOf<UGameplayEffect> GetDamageEffectForCurrentCombo() const;
 };
