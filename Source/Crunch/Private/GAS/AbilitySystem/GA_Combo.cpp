@@ -13,8 +13,13 @@
 
 UGA_Combo::UGA_Combo()
 {
-	AbilityTags.AddTag(CGameplayTags::Ability_BasicAttack);
+	FGameplayTagContainer AssetTags;
+	AssetTags.AddTag(CGameplayTags::Ability_BasicAttack);
+	
+	SetAssetTags(AssetTags);
+	
 	BlockAbilitiesWithTag.AddTag(CGameplayTags::Ability_BasicAttack);
+
 }
 
 void UGA_Combo::ActivateAbility(
@@ -79,7 +84,7 @@ void UGA_Combo::ComboChangedEventReceived(FGameplayEventData GameplayEventData)
 
 void UGA_Combo::DoDamage(FGameplayEventData GameplayEventData)
 {
-	TArray<FHitResult> HitResults = GetHitResultFromSweepLocationTargetData(GameplayEventData.TargetData, SphereSweepRadius, bDrawDebug, bIgnoreSelf);
+	TArray<FHitResult> HitResults = GetHitResultFromSweepLocationTargetData(GameplayEventData.TargetData, SphereSweepRadius, ETeamAttitude::Hostile, bDrawDebug, bIgnoreSelf);
 
 	for (const FHitResult& HitResult: HitResults)
 	{

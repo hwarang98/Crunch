@@ -49,8 +49,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TMap<EAbilityInputID, UInputAction*> GameplayAbilityInputActions;
 
-#pragma endregion 
-
+	
 	void HandleLoopInput(const FInputActionValue& InputActionValue);
 	void HandleMoveInput(const FInputActionValue& InputActionValue);
 	void HandleAbilityInput(const FInputActionValue& InputActionValue, EAbilityInputID InputID);
@@ -59,4 +58,13 @@ private:
 	FVector GetLookRightDirection() const;
 	FVector GetLookForwardDirection() const;
 	FVector GetMoveForwardDirection() const;
+	
+#pragma endregion
+
+#pragma region Death And Respawn
+
+	virtual void OnDead() override;
+	virtual void OnRespawn() override;
+	
+#pragma endregion
 };

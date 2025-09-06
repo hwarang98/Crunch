@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Player/CPlayerController.h"
-
+#include "Controller/CPlayerController.h"
 #include "Blueprint/UserWidget.h"
 #include "Player/CPlayerCharacter.h"
 #include "Widgets/GameplayWidget.h"
+#include "Net/UnrealNetwork.h"
 
 
 void ACPlayerController::OnPossess(APawn* NewPawn)
@@ -15,6 +15,7 @@ void ACPlayerController::OnPossess(APawn* NewPawn)
 	if (PlayerCharacter)
 	{
 		PlayerCharacter->ServerSideInit();
+		PlayerCharacter->SetGenericTeamId(TeamID);
 	}
 }
 
@@ -28,6 +29,22 @@ void ACPlayerController::AcknowledgePossession(APawn* NewPawn)
 		PlayerCharacter->ClientSideInit();
 		SpawnGameplayWidget();
 	}
+}
+
+void ACPlayerController::SetGenericTeamId(const FGenericTeamId& NewTeamID)
+{
+	TeamID = NewTeamID;
+}
+
+FGenericTeamId ACPlayerController::GetGenericTeamId() const
+{
+	return TeamID;
+}
+
+void ACPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ACPlayerController, TeamID);
 }
 
 void ACPlayerController::SpawnGameplayWidget()

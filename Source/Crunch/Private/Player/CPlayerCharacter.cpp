@@ -57,6 +57,22 @@ void ACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	}
 }
 
+void ACPlayerCharacter::OnDead()
+{
+	if (APlayerController* PlayerController = GetController<APlayerController>())
+	{
+		DisableInput(PlayerController);
+	}
+}
+
+void ACPlayerCharacter::OnRespawn()
+{
+	if (APlayerController* PlayerController = GetController<APlayerController>())
+	{
+		EnableInput(PlayerController);
+	}
+}
+
 void ACPlayerCharacter::HandleLoopInput(const FInputActionValue& InputActionValue)
 {
 	const FVector2D InputValue = GetInputActionValue(InputActionValue);

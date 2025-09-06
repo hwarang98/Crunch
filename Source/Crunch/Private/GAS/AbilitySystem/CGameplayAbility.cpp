@@ -16,56 +16,93 @@ UAnimInstance* UCGameplayAbility::GetOwnerAnimInstance() const
 	return nullptr;
 }
 
+/**
+ * @brief 타겟 데이터 핸들에서 스윕 위치를 기반으로 피격 결과를 가져
+ * @param TargetDataHandle 스윕의 시작 및 끝 위치를 포함하는 타겟 데이터
+ * @param SphereSweepRadius 스윕에 사용할 구의 반지름
+ * @param TargetTeam 필터링할 대상의 팀 관계입니다. (예: 적, 아군)
+ * @param bDrawDebug 디버그용 스윕 라인을 그릴지 여부
+ * @param bIgnoreSelf 어빌리티 시전자 자신을 무시할지 여부
+ * @return 조건에 맞는 필터링된 피격 결과 배열을 반환
+ */
 TArray<FHitResult> UCGameplayAbility::GetHitResultFromSweepLocationTargetData(
 	const FGameplayAbilityTargetDataHandle& TargetDataHandle,
 	float SphereSweepRadius,
+	ETeamAttitude::Type TargetTeam,
 	bool bDrawDebug,
 	bool bIgnoreSelf
 ) const
 {
+	// 최종적으로 반환할 유효한 피격 결과들을 저장할 배열
 	TArray<FHitResult> OutResult;
+	// 이미 처리한 액터를 추적하여 중복 처리를 방지하기 위한 집합
 	TSet<AActor*> HitActors;
 
+	// 입력받은 모든 타겟 데이터를 순회
 	for (const TSharedPtr<FGameplayAbilityTargetData> TargetData : TargetDataHandle.Data)
 	{
+		// 스윕의 시작 위치와 끝 위치를 타겟 데이터에서 가져
 		FVector StartLocation = TargetData->GetOrigin().GetTranslation();
 		FVector EndLocation = TargetData->GetEndPoint();
 
+		// 스윕이 감지할 오브젝트 타입을 설정합니다. 여기서는 Pawn만 감지하도록 함
 		TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 		ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
 
+		// 스윕에서 무시할 액터 목록
 		TArray<AActor*> ActorsToIgnore;
 		if (bIgnoreSelf)
 		{
+			// bIgnoreSelf가 true이면, 어빌리티 시전자 자신을 무시 목록에 추가
 			ActorsToIgnore.Add(GetAvatarActorFromActorInfo());
 		}
 
+		// bDrawDebug 값에 따라 디버그 드로잉 옵션을 설정
 		EDrawDebugTrace::Type DrawDebugTrace = bDrawDebug ? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None;
 
+		// 스윕 결과를 저장할 배열
 		TArray<FHitResult> HitResults;
 		
+		// 구체 스윕을 수행하여 지정된 오브젝트 타입과 충돌하는 모든 액터를 찾음
 		UKismetSystemLibrary::SphereTraceMultiForObjects(
 			this,
 			StartLocation,
 			EndLocation,
 			SphereSweepRadius,
 			ObjectTypes,
-			false,
+			false, // bTraceComplex
 			ActorsToIgnore,
 			DrawDebugTrace,
 			HitResults,
-			false
+			bIgnoreSelf
 		);
 
+		// 스윕으로 감지된 모든 피격 결과를 순회하며 필터링
 		for (const FHitResult& HitResult : HitResults)
 		{
+			// 이미 처리된 액터인 경우 건너뜁 (중복 방지).
 			if (HitActors.Contains(HitResult.GetActor()))
 			{
 				continue;
 			}
+
+			// 어빌리티 시전자의 팀 인터페이스를 가져옴
+			if (IGenericTeamAgentInterface* OwnerTeamInterface = Cast<IGenericTeamAgentInterface>(GetAvatarActorFromActorInfo()))
+			{
+				// 피격된 액터에 대한 시전자의 팀 관계를 확인
+				ETeamAttitude::Type OtherActorTeamAttribute = OwnerTeamInterface->GetTeamAttitudeTowards(*HitResult.GetActor());
+				// 원하는 팀 관계(TargetTeam)가 아니면 건너뜁
+				if (OtherActorTeamAttribute != TargetTeam)
+				{
+					continue;
+				}
+			}
+			
+			// 유효한 피격이므로, 액터를 처리된 목록에 추가하고 결과를 최종 결과 배열에 추가
 			HitActors.Add(HitResult.GetActor());
 			OutResult.Add(HitResult);
 		}
 	}
+	// 필터링된 최종 피격 결과 배열을 반환
 	return OutResult;
 }
