@@ -10,6 +10,7 @@
 #include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+// ACPlayerCharacter::ACPlayerCharacter(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 ACPlayerCharacter::ACPlayerCharacter()
 {
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>("CameraBoom");

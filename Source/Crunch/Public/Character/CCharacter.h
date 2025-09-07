@@ -12,6 +12,7 @@ struct FGameplayTag;
 class UWidgetComponent;
 class UCAttributeSet;
 class UCAbilitySystemComponent;
+class UAIPerceptionStimuliSourceComponent;
 
 UCLASS()
 class ACCharacter : public ACharacter, public IAbilitySystemInterface, public IGenericTeamAgentInterface
@@ -101,6 +102,15 @@ private:
 	
 #pragma endregion
 
+#pragma region AI
+	UPROPERTY();
+	UAIPerceptionStimuliSourceComponent* PerceptionStimuliSourceComponent;
+
+	void SetAIPerceptionStimuliSourceEnable(bool bIsEnabled);
+	
+#pragma endregion
+
+	
 	UPROPERTY(Replicated)
 	FGenericTeamId TeamID;
 };

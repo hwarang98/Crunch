@@ -4,7 +4,6 @@
 #include "Character/CCharacter.h"
 
 #include "CGameplayTags.h"
-#include "DebugHelper.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/WidgetComponent.h"
@@ -12,23 +11,32 @@
 #include "GAS/CAbilitySystemComponent.h"
 #include "GAS/Attribute/CAttributeSet.h"
 #include "Kismet/GameplayStatics.h"
-#include "Net/UnrealNetwork.h"
 #include "Widgets/OverHeadStatsGauge.h"
-// #include "GameplayTagContainer.h"
+#include "Net/UnrealNetwork.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Sight.h"
 
-// Sets default values
+#include "DebugHelper.h"
+
+// const FObjectInitializer& ObjectInitializer
+// : Super(ObjectInitializer)
 ACCharacter::ACCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	// 컴포넌트 부착
 	AbilitySystemComponent = CreateDefaultSubobject<UCAbilitySystemComponent>("Ability System Component");
 	CAttributeSet = CreateDefaultSubobject<UCAttributeSet>("Attribute Set");
 	OverHeadWidgetComponent = CreateDefaultSubobject<UWidgetComponent>("Over Head Widget Component");
+
+	// 초기값 세팅
 	OverHeadWidgetComponent->SetupAttachment(GetRootComponent());
 
 	BindGasChangeDelegates();
+
+	PerceptionStimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>("Perception Stimuli Source Component");
 }
 
 void ACCharacter::ServerSideInit()
@@ -59,12 +67,12 @@ void ACCharacter::PossessedBy(AController* NewController)
 	}
 }
 
-
 void ACCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	ConfigureOverHeadStatusWidget();
 	MeshRelativeTransform = GetMesh()->GetRelativeTransform();
+	PerceptionStimuliSourceComponent->RegisterForSense(UAISense_Sight::StaticClass());
 }
 
 void ACCharacter::BindGasChangeDelegates()
@@ -180,6 +188,7 @@ void ACCharacter::StartDeathSequence()
 	SetStatusGuageEnabled(false);
 	GetCharacterMovement()->SetMovementMode(MOVE_None);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SetAIPerceptionStimuliSourceEnable(false);
 }
 
 void ACCharacter::DeathMontageFinished()
@@ -207,6 +216,7 @@ void ACCharacter::SetRagdollEnabled(bool bIsEnabled)
 void ACCharacter::Respawn()
 {
 	OnRespawn();
+	SetAIPerceptionStimuliSourceEnable(true);
 	SetRagdollEnabled(false);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
@@ -234,5 +244,22 @@ void ACCharacter::OnDead()
 
 void ACCharacter::OnRespawn()
 {
+}
+
+void ACCharacter::SetAIPerceptionStimuliSourceEnable(bool bIsEnabled)
+{
+	if (!PerceptionStimuliSourceComponent)
+	{
+		return;
+	}
+
+	if (bIsEnabled)
+	{
+		PerceptionStimuliSourceComponent->RegisterWithPerceptionSystem(); // RegisterWithPerceptionSystem 등록
+	}
+	else
+	{
+		PerceptionStimuliSourceComponent->UnregisterFromPerceptionSystem(); // RegisterWithPerceptionSystem 해제
+	}
 }
 
