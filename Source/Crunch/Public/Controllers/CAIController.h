@@ -6,6 +6,7 @@
 #include "AIController.h"
 #include "CAIController.generated.h"
 
+struct FGameplayTag;
 struct FAIStimulus;
 class UAISenseConfig_Sight;
 /**
@@ -48,9 +49,13 @@ private:
 	void TargetForgotten(AActor* TargetForgotten);
 
 	const UObject* GetCurrentTarget() const;
+	AActor* GetNextPerceivedActor() const;
 	void SetCurrentTarget(AActor* NewTarget);
 	void ForgetActorIfDead(AActor* ActorToForget);
-	AActor* GetNextPerceivedActor() const;
-	
+	void ClearAndDisableAllSenses();
+	void EnableAllSenses();
+	void PawnDeadTagUpdated(const FGameplayTag InTag, int32 Count);
+
+	const float NumberUnLimit = TNumericLimits<float>::Max();
 };
 

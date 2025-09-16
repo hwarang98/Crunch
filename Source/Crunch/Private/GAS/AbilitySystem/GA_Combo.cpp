@@ -56,8 +56,6 @@ void UGA_Combo::ActivateAbility(
 		WaitTargetingEventTask->ReadyForActivation();
 	}
 	SetupWaitComboInputPress();
-	
-
 }
 
 void UGA_Combo::SetupWaitComboInputPress()

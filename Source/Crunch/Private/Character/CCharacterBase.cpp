@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Character/CCharacter.h"
+#include "Public/Characters/CCharacterBase.h"
 
 #include "CGameplayTags.h"
 #include "Components/CapsuleComponent.h"
@@ -20,7 +20,7 @@
 
 // const FObjectInitializer& ObjectInitializer
 // : Super(ObjectInitializer)
-ACCharacter::ACCharacter()
+ACCharacterBase::ACCharacterBase()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -39,24 +39,37 @@ ACCharacter::ACCharacter()
 	PerceptionStimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>("Perception Stimuli Source Component");
 }
 
-void ACCharacter::ServerSideInit()
+void ACCharacterBase::ServerSideInit()
 {
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	AbilitySystemComponent->ApplyInitialEffects();
 	AbilitySystemComponent->GiveInitialAbilities();
 }
 
-void ACCharacter::ClientSideInit()
+void ACCharacterBase::ClientSideInit()
 {
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 }
 
-bool ACCharacter::IsLocallyControlledByPlayer() const
+bool ACCharacterBase::IsLocallyControlledByPlayer() const
 {
 	return GetController() && GetController()->IsLocalPlayerController();
 }
 
-void ACCharacter::PossessedBy(AController* NewController)
+bool ACCharacterBase::IsDead() const
+{
+	return GetAbilitySystemComponent()->HasMatchingGameplayTag(CGameplayTags::State_Death);
+}
+
+void ACCharacterBase::RespawnImmediately()
+{
+	if (HasAuthority())
+	{
+		GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(CGameplayTags::State_Death));
+	}
+}
+
+void ACCharacterBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
@@ -67,7 +80,7 @@ void ACCharacter::PossessedBy(AController* NewController)
 	}
 }
 
-void ACCharacter::BeginPlay()
+void ACCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 	ConfigureOverHeadStatusWidget();
@@ -75,15 +88,15 @@ void ACCharacter::BeginPlay()
 	PerceptionStimuliSourceComponent->RegisterForSense(UAISense_Sight::StaticClass());
 }
 
-void ACCharacter::BindGasChangeDelegates()
+void ACCharacterBase::BindGasChangeDelegates()
 {
 	if (AbilitySystemComponent)
 	{
-		AbilitySystemComponent->RegisterGameplayTagEvent(CGameplayTags::State_Death).AddUObject(this, &ACCharacter::DeathTagUpdated);
+		AbilitySystemComponent->RegisterGameplayTagEvent(CGameplayTags::State_Death).AddUObject(this, &ACCharacterBase::DeathTagUpdated);
 	}
 }
 
-void ACCharacter::DeathTagUpdated(const FGameplayTag Tag, int32 NewCount)
+void ACCharacterBase::DeathTagUpdated(const FGameplayTag Tag, int32 NewCount)
 {
 	if (NewCount != 0)
 	{
@@ -95,7 +108,7 @@ void ACCharacter::DeathTagUpdated(const FGameplayTag Tag, int32 NewCount)
 	}
 }
 
-void ACCharacter::ConfigureOverHeadStatusWidget()
+void ACCharacterBase::ConfigureOverHeadStatusWidget()
 {
 	check(OverHeadWidgetComponent);
 
@@ -115,7 +128,7 @@ void ACCharacter::ConfigureOverHeadStatusWidget()
 	GetWorldTimerManager().SetTimer(HeadStatGaugeVisibilityUpdateTimerHandle, this, &ThisClass::UpdateHeadGaugeVisibility, HeadStatGaugeVisibilityCheckUpdateGap, true);
 }
 
-void ACCharacter::SetStatusGuageEnabled(bool bIsEnabled)
+void ACCharacterBase::SetStatusGuageEnabled(bool bIsEnabled)
 {
 	if (bIsEnabled)
 	{
@@ -127,7 +140,7 @@ void ACCharacter::SetStatusGuageEnabled(bool bIsEnabled)
 	}
 }
 
-void ACCharacter::UpdateHeadGaugeVisibility()
+void ACCharacterBase::UpdateHeadGaugeVisibility()
 {
 	APawn* LocalPlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
 	if (LocalPlayerPawn)
@@ -138,41 +151,41 @@ void ACCharacter::UpdateHeadGaugeVisibility()
 }
 
 // Called every frame
-void ACCharacter::Tick(float DeltaTime)
+void ACCharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 }
 
 // Called to bind functionality to input
-void ACCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ACCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 }
 
-UAbilitySystemComponent* ACCharacter::GetAbilitySystemComponent() const
+UAbilitySystemComponent* ACCharacterBase::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
 }
 
-void ACCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void ACCharacterBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(ACCharacter, TeamID);
+	DOREPLIFETIME(ACCharacterBase, TeamID);
 }
 
-void ACCharacter::SetGenericTeamId(const FGenericTeamId& NewTeamID)
+void ACCharacterBase::SetGenericTeamId(const FGenericTeamId& NewTeamID)
 {
 	TeamID = NewTeamID;
 }
 
-FGenericTeamId ACCharacter::GetGenericTeamId() const
+FGenericTeamId ACCharacterBase::GetGenericTeamId() const
 {
 	return TeamID;
 }
 
-void ACCharacter::PlayDeathAnimation()
+void ACCharacterBase::PlayDeathAnimation()
 {
 	if (DeathMontage)
 	{
@@ -181,9 +194,15 @@ void ACCharacter::PlayDeathAnimation()
 	}
 }
 
-void ACCharacter::StartDeathSequence()
+void ACCharacterBase::StartDeathSequence()
 {
 	OnDead();
+
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->CancelAbilities();
+	}
+	
 	PlayDeathAnimation();
 	SetStatusGuageEnabled(false);
 	GetCharacterMovement()->SetMovementMode(MOVE_None);
@@ -191,16 +210,20 @@ void ACCharacter::StartDeathSequence()
 	SetAIPerceptionStimuliSourceEnable(false);
 }
 
-void ACCharacter::DeathMontageFinished()
+void ACCharacterBase::DeathMontageFinished()
 {
-	SetRagdollEnabled(true);
+	if (IsDead())
+	{
+		SetRagdollEnabled(true);
+	}
 }
 
-void ACCharacter::SetRagdollEnabled(bool bIsEnabled)
+void ACCharacterBase::SetRagdollEnabled(bool bIsEnabled)
 {
 	if (bIsEnabled)
 	{
-		GetMesh()->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+		// GetMesh()->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+		GetMesh()->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 		GetMesh()->SetSimulatePhysics(true);
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 	}
@@ -213,7 +236,7 @@ void ACCharacter::SetRagdollEnabled(bool bIsEnabled)
 	}
 }
 
-void ACCharacter::Respawn()
+void ACCharacterBase::Respawn()
 {
 	OnRespawn();
 	SetAIPerceptionStimuliSourceEnable(true);
@@ -238,15 +261,15 @@ void ACCharacter::Respawn()
 	}
 }
 
-void ACCharacter::OnDead()
+void ACCharacterBase::OnDead()
 {
 }
 
-void ACCharacter::OnRespawn()
+void ACCharacterBase::OnRespawn()
 {
 }
 
-void ACCharacter::SetAIPerceptionStimuliSourceEnable(bool bIsEnabled)
+void ACCharacterBase::SetAIPerceptionStimuliSourceEnable(bool bIsEnabled)
 {
 	if (!PerceptionStimuliSourceComponent)
 	{
@@ -261,5 +284,9 @@ void ACCharacter::SetAIPerceptionStimuliSourceEnable(bool bIsEnabled)
 	{
 		PerceptionStimuliSourceComponent->UnregisterFromPerceptionSystem(); // RegisterWithPerceptionSystem 해제
 	}
+}
+
+void ACCharacterBase::OnRep_TeamID()
+{
 }
 

@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Controller/CPlayerController.h"
+#include "Public/Controllers/CPlayerController.h"
 #include "Blueprint/UserWidget.h"
-#include "Player/CPlayerCharacter.h"
+#include "Public/Characters/CPlayerCharacter.h"
 #include "Widgets/GameplayWidget.h"
 #include "Net/UnrealNetwork.h"
 

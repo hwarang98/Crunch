@@ -46,6 +46,13 @@ void UCAbilitySystemComponent::ApplyFullStatEffect()
 	AuthApplyGameplayEffect(FullStateEffect);
 }
 
+/**
+ * AuthApplyGameplayEffect는 지정된 GameplayEffect를 특정 레벨로 적용합니다.
+ * 이 메서드는 권한을 가진(Aggregate Authority) 소유자에서만 호출될 수 있습니다.
+ *
+ * @param GameplayEffect 적용할 UGameplayEffect의 클래스입니다.
+ * @param Level GameplayEffect를 적용할 레벨 값입니다.
+ */
 void UCAbilitySystemComponent::AuthApplyGameplayEffect(TSubclassOf<UGameplayEffect> GameplayEffect, int Level)
 {
 	if (GetOwner() && GetOwner()->HasAuthority())

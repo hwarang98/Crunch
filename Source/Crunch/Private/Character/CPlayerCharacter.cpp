@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Player/CPlayerCharacter.h"
+#include "Public/Characters/CPlayerCharacter.h"
 
 #include "AbilitySystemComponent.h"
 #include "Camera/CameraComponent.h"
@@ -38,8 +38,6 @@ void ACPlayerCharacter::PawnClientRestart()
 			InputSubSystem->AddMappingContext(GameplayInputMappingContext, 0);
 		}
 	}
-
-	
 }
 
 void ACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

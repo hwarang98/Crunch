@@ -1,13 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Controller/CAIController.h"
+#include "Public/Controllers/CAIController.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "BrainComponent.h"
 #include "CGameplayTags.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "Character/CCharacter.h"
+#include "Public/Characters/CCharacterBase.h"
+#include "GAS/CAbilitySystemComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 
@@ -39,11 +41,17 @@ ACAIController::ACAIController()
 void ACAIController::OnPossess(APawn* NewPawn)
 {
 	Super::OnPossess(NewPawn);
-	SetGenericTeamId(FGenericTeamId(0));
 
 	if (IGenericTeamAgentInterface* PawnAsTeamInterface = Cast<IGenericTeamAgentInterface>(NewPawn))
 	{
-		PawnAsTeamInterface->SetGenericTeamId(GetGenericTeamId());
+		SetGenericTeamId(PawnAsTeamInterface->GetGenericTeamId());
+		ClearAndDisableAllSenses(); // 혹시모를 Sense가 작동중인경우 Sense 비활성화
+		EnableAllSenses(); // 다시활성화
+	}
+
+	if (UAbilitySystemComponent* PawnAbilitySystemComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(NewPawn))
+	{
+		PawnAbilitySystemComponent->RegisterGameplayTagEvent(CGameplayTags::State_Death).AddUObject(this, &ThisClass::PawnDeadTagUpdated);
 	}
 }
 
@@ -124,10 +132,47 @@ void ACAIController::ForgetActorIfDead(AActor* ActorToForget)
 				{
 					// 자극의 나이를 float의 최대값으로 설정하여,
 					// AI가 이 액터를 더 이상 인식하지 못하도록 "만료" 처리
-					Stimulus.SetStimulusAge(TNumericLimits<float>::Max());
+					Stimulus.SetStimulusAge(NumberUnLimit);
 				}
 			}
 		}
+	}
+}
+
+void ACAIController::ClearAndDisableAllSenses()
+{
+	AIPerceptionComponent->AgeStimuli(NumberUnLimit);
+
+	for (auto SenseConfigIt = AIPerceptionComponent->GetSensesConfigIterator(); SenseConfigIt; ++SenseConfigIt)
+	{
+		AIPerceptionComponent->SetSenseEnabled((*SenseConfigIt)->GetSenseImplementation(), false);
+	}
+
+	if (GetBlackboardComponent())
+	{
+		GetBlackboardComponent()->ClearValue(TargetBlackboardKeyName);
+	}
+}
+
+void ACAIController::EnableAllSenses()
+{
+	for (auto SenseConfigIt = AIPerceptionComponent->GetSensesConfigIterator(); SenseConfigIt; ++SenseConfigIt)
+	{
+		AIPerceptionComponent->SetSenseEnabled((*SenseConfigIt)->GetSenseImplementation(), true);
+	}
+}
+
+void ACAIController::PawnDeadTagUpdated(const FGameplayTag InTag, int32 Count)
+{
+	if (Count != 0)
+	{
+		GetBrainComponent()->StopLogic("Dead");
+		ClearAndDisableAllSenses();
+	}
+	else
+	{
+		GetBrainComponent()->StartLogic();
+		EnableAllSenses();
 	}
 }
 

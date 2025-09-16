@@ -74,6 +74,17 @@ void UCAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME_CONDITION_NOTIFY(UCAttributeSet, MaxMana, COND_None, REPNOTIFY_Always)
 }
 
+/**
+ * 속성 변경 전에 호출되는 함수
+ *
+ * 이 함수는 Health 및 Mana 속성이 변경되기 전에 실행되며,
+ * 새 값(NewValue)이 유효한 범위 내에 있도록 보장하기 위해 값을 클램핑합니다.
+ * Health 속성은 0과 MaxHealth 사이의 값으로 제한되며,
+ * Mana 속성은 0과 MaxMana 사이의 값으로 제한됩니다.
+ *
+ * @param Attribute 변경될 속성의 참조입니다. Health 또는 Mana와 관련된 속성을 전달받을 수 있습니다.
+ * @param NewValue 변경될 속성의 새 값입니다. 이 값이 적절한 범위 내로 클램핑됩니다.
+ */
 void UCAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
 	if (Attribute == GetHealthAttribute())
@@ -87,6 +98,15 @@ void UCAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, flo
 	}
 }
 
+/**
+ * GameplayEffect 실행 후 속성 값을 처리
+ *
+ * 이 함수는 GameplayEffect 실행 후 속성 값이 변경된 경우 호출되며,
+ * 변경된 속성 값을 특정 범위로 제한하거나 추가 로직을 실행하는 데 사용.
+ * Health 및 Mana 속성 값에 대해 제한된 값 범위를 적용해 주어진 Max 값을 초과하거나 0보다 작아지지 않도록 함.
+ *
+ * @param Data 변경된 속성 값과 관련 메타 데이터를 포함한 FGameplayEffectModCallbackData 구조체.
+ */
 void UCAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())

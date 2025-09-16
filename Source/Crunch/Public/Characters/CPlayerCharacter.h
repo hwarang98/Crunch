@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Character/CCharacter.h"
+#include "Public/Characters/CCharacterBase.h"
 #include "GAS/Types/CGameAbilityTypes.h"
 #include "CPlayerCharacter.generated.h"
 
@@ -16,7 +16,7 @@ class USpringArmComponent;
  * 
  */
 UCLASS()
-class ACPlayerCharacter : public ACCharacter
+class ACPlayerCharacter : public ACCharacterBase
 {
 	GENERATED_BODY()
 

@@ -6,7 +6,7 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
 #include "GenericTeamAgentInterface.h"
-#include "CCharacter.generated.h"
+#include "CCharacterBase.generated.h"
 
 struct FGameplayTag;
 class UWidgetComponent;
@@ -15,16 +15,18 @@ class UCAbilitySystemComponent;
 class UAIPerceptionStimuliSourceComponent;
 
 UCLASS()
-class ACCharacter : public ACharacter, public IAbilitySystemInterface, public IGenericTeamAgentInterface
+class ACCharacterBase : public ACharacter, public IAbilitySystemInterface, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this character's properties
-	ACCharacter();
+	ACCharacterBase();
 	void ServerSideInit();
 	void ClientSideInit();
 	bool IsLocallyControlledByPlayer() const;
+	bool IsDead() const;
+	void RespawnImmediately();
 
 	// 서버에서만 호출
 	virtual void PossessedBy(AController* NewController) override;
@@ -111,6 +113,9 @@ private:
 #pragma endregion
 
 	
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_TeamID)
 	FGenericTeamId TeamID;
+
+	UFUNCTION()
+	virtual void OnRep_TeamID();
 };
