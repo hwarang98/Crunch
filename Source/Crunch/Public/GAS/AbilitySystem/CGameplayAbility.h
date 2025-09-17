@@ -24,4 +24,20 @@ protected:
 		bool bDrawDebug = false,
 		bool bIgnoreSelf = true
 	) const;
+
+	void PushSelf(const FVector& PushVelocity);
+	void PushTarget(AActor* Target, const FVector& PushVelocity);
+	void ApplyGameplayEffectToHitResultActor(const FHitResult& HitResult, TSubclassOf<UGameplayEffect> GameplayEffect, int Level = 1);
+
+	ACharacter* GetOwningAvatarCharacter();
+
+	UFUNCTION()
+	FORCEINLINE bool ShouldDrawDebug() const { return bShouldDrawDebug; }
+
+private:
+	UPROPERTY(EditDefaultsOnly, Category = "Debug")
+	bool bShouldDrawDebug = false;
+
+	UPROPERTY()
+	TObjectPtr<ACharacter> AvatarCharacter;
 };

@@ -13,8 +13,12 @@ namespace CGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Combo_Change_Combo04, "Ability.Combo.Change.Combo04");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Combo_Change_End, "Ability.Combo.Change.End");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Combo_Damage,  "Ability.Combo.Damage");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_SpinAttack,  "Ability.SpinAttack");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Spine_Cooldown,  "Ability.Spin.Cooldown");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Passive_Launch_Activate, "Ability.Passive.Launch.Activate");
 	
 	UE_DEFINE_GAMEPLAY_TAG(State_Death, "State.Death");
+	UE_DEFINE_GAMEPLAY_TAG(State_Stun, "State.Stun");
 }
 
 

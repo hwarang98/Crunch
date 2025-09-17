@@ -2,13 +2,12 @@
 
 
 #include "GAS/AbilitySystem/GA_Combo.h"
-
-#include "AbilitySystemBlueprintLibrary.h"
-#include "CGameplayTags.h"
-#include "GameplayTagsManager.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Abilities/Tasks/AbilityTask_WaitInputPress.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "CGameplayTags.h"
+#include "GameplayTagsManager.h"
 #include "DebugHelper.h"
 
 UGA_Combo::UGA_Combo()
@@ -87,20 +86,7 @@ void UGA_Combo::DoDamage(FGameplayEventData GameplayEventData)
 	for (const FHitResult& HitResult: HitResults)
 	{
 		const TSubclassOf<UGameplayEffect> GameplayEffect = GetDamageEffectForCurrentCombo();
-		const FGameplayEffectSpecHandle EffectSpecHandle = MakeOutgoingGameplayEffectSpec(GameplayEffect, GetAbilityLevel(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo()));
-
-		FGameplayEffectContextHandle EffectContextHandle = MakeEffectContext(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo());
-		EffectContextHandle.AddHitResult(HitResult);
-
-		EffectSpecHandle.Data->SetContext(EffectContextHandle);
-
-		ApplyGameplayEffectSpecToTarget(
-			GetCurrentAbilitySpecHandle(),
-			CurrentActorInfo,
-			CurrentActivationInfo,
-			EffectSpecHandle,
-			UAbilitySystemBlueprintLibrary::AbilityTargetDataFromActor(HitResult.GetActor())
-		);
+		ApplyGameplayEffectToHitResultActor(HitResult, GameplayEffect, GetAbilityLevel(CurrentSpecHandle, CurrentActorInfo));
 	}
 }
 
