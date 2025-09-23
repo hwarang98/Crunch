@@ -8,6 +8,7 @@
 #include "CPlayerCharacter.generated.h"
 
 struct FInputActionValue;
+class UBoxComponent;
 class UInputAction;
 class UInputMappingContext;
 class UCameraComponent;
@@ -26,11 +27,15 @@ public:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 private:
+#pragma region Camera
+	
 	UPROPERTY(VisibleDefaultsOnly, Category = "View")
 	USpringArmComponent* CameraBoom;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "View")
 	UCameraComponent* ViewCamera;
+
+#pragma endregion
 
 #pragma region Input
 	
@@ -67,4 +72,36 @@ private:
 	virtual void OnRespawn() override;
 	
 #pragma endregion
+
+#pragma region Stun
+
+	virtual void OnStun() override;
+	virtual void OnRecoverFromStun() override;
+	
+#pragma endregion
+
+#pragma region Hit Collision
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UBoxComponent> RightHandCollisionBox;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UBoxComponent> LeftHandCollisionBox;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+	FName AttackHandCollisionBoxAttachBoneName;
+	
+	UFUNCTION()
+	void OnAttackHitBoxOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult
+	);
+#pragma endregion
+
+	void SetInputEnableFromPlayerController(bool bEnable);
+	bool bEnableInput = true;
+	bool bDisableInput = false;
 };

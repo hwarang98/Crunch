@@ -3,6 +3,7 @@
 
 #include "Public/Characters/CCharacterBase.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "CGameplayTags.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -92,7 +93,8 @@ void ACCharacterBase::BindGasChangeDelegates()
 {
 	if (AbilitySystemComponent)
 	{
-		AbilitySystemComponent->RegisterGameplayTagEvent(CGameplayTags::State_Death).AddUObject(this, &ACCharacterBase::DeathTagUpdated);
+		AbilitySystemComponent->RegisterGameplayTagEvent(CGameplayTags::State_Death).AddUObject(this, &ThisClass::DeathTagUpdated);
+		AbilitySystemComponent->RegisterGameplayTagEvent(CGameplayTags::State_Stun).AddUObject(this, &ThisClass::StunTagUpdated);
 	}
 }
 
@@ -105,6 +107,25 @@ void ACCharacterBase::DeathTagUpdated(const FGameplayTag Tag, int32 NewCount)
 	else
 	{
 		Respawn();
+	}
+}
+
+void ACCharacterBase::StunTagUpdated(const FGameplayTag Tag, int32 NewCount)
+{
+	if (IsDead())
+	{
+		return;
+	}
+
+	if (NewCount != 0)
+	{
+		OnStun();
+		PlayAnimMontage(StunMontage);
+	}
+	else
+	{
+		OnRecoverFromStun();
+		StopAnimMontage(StunMontage);
 	}
 }
 
@@ -169,6 +190,16 @@ UAbilitySystemComponent* ACCharacterBase::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
+void ACCharacterBase::Server_SendGameplayEventToSelf_Implementation(const FGameplayTag& EventTag, const FGameplayEventData& EventData)
+{
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, EventData);
+}
+
+bool ACCharacterBase::Server_SendGameplayEventToSelf_Validate(const FGameplayTag& EventTag, const FGameplayEventData& EventData)
+{
+	return true;
+}
+
 void ACCharacterBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -205,7 +236,7 @@ void ACCharacterBase::StartDeathSequence()
 	
 	PlayDeathAnimation();
 	SetStatusGuageEnabled(false);
-	GetCharacterMovement()->SetMovementMode(MOVE_None);
+	// GetCharacterMovement()->SetMovementMode(MOVE_None);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SetAIPerceptionStimuliSourceEnable(false);
 }
@@ -242,7 +273,7 @@ void ACCharacterBase::Respawn()
 	SetAIPerceptionStimuliSourceEnable(true);
 	SetRagdollEnabled(false);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	// GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 	GetMesh()->GetAnimInstance()->StopAllMontages(0.f);
 	SetStatusGuageEnabled(true);
 
@@ -284,6 +315,14 @@ void ACCharacterBase::SetAIPerceptionStimuliSourceEnable(bool bIsEnabled)
 	{
 		PerceptionStimuliSourceComponent->UnregisterFromPerceptionSystem(); // RegisterWithPerceptionSystem 해제
 	}
+}
+
+void ACCharacterBase::OnStun()
+{
+}
+
+void ACCharacterBase::OnRecoverFromStun()
+{
 }
 
 void ACCharacterBase::OnRep_TeamID()

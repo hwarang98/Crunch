@@ -9,7 +9,7 @@ void UAN_SendGameplayEvent::Notify(USkeletalMeshComponent* MeshComp, UAnimSequen
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	checkf(MeshComp->GetOwner(), TEXT("MeshComp->GetOwner()가 nullptr입니다. 반드시 Owner가 있어야 합니다."));
+	ensureMsgf(MeshComp->GetOwner(), TEXT("MeshComp->GetOwner()가 nullptr입니다. 반드시 Owner가 있어야 합니다."));
 
 	const UAbilitySystemComponent* OwnerAbilitySystemComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(MeshComp->GetOwner());
 

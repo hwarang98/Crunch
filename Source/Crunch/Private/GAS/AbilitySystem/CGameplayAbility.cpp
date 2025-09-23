@@ -9,6 +9,11 @@
 #include "GAS/AbilitySystem/GAP_Launched.h"
 #include "Kismet/KismetSystemLibrary.h"
 
+UCGameplayAbility::UCGameplayAbility()
+{
+	ActivationBlockedTags.AddTag(CGameplayTags::State_Stun);
+}
+
 UAnimInstance* UCGameplayAbility::GetOwnerAnimInstance() const
 {
 	USkeletalMeshComponent* SkeletalMeshComponent = GetOwningComponentFromActorInfo();
@@ -78,7 +83,7 @@ TArray<FHitResult> UCGameplayAbility::GetHitResultFromSweepLocationTargetData(
 			ActorsToIgnore,
 			DrawDebugTrace,
 			HitResults,
-			!bIgnoreSelf
+			bIgnoreSelf
 		);
 
 		// 스윕으로 감지된 모든 피격 결과를 순회하며 필터링

@@ -28,13 +28,13 @@ private:
 	FName TargetBlackboardKeyName = FName("Target");
 	
 	UPROPERTY(EditDefaultsOnly, Category = "AI Behavior")
-	UBehaviorTree* BehaviorTree;
+	TObjectPtr<UBehaviorTree> BehaviorTree;
 	
 	UPROPERTY(VisibleDefaultsOnly, Category = "Perception")
-	UAIPerceptionComponent* AIPerceptionComponent;
+	TObjectPtr<UAIPerceptionComponent> AIPerceptionComponent;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "Perception")
-	UAISenseConfig_Sight* SightConfig;
+	TObjectPtr<UAISenseConfig_Sight> SightConfig;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Perception | Sight")
 	float InSightRadius = 1000.f;
@@ -50,11 +50,15 @@ private:
 
 	const UObject* GetCurrentTarget() const;
 	AActor* GetNextPerceivedActor() const;
+	
 	void SetCurrentTarget(AActor* NewTarget);
 	void ForgetActorIfDead(AActor* ActorToForget);
 	void ClearAndDisableAllSenses();
 	void EnableAllSenses();
 	void PawnDeadTagUpdated(const FGameplayTag InTag, int32 Count);
+	void PawnStunTagUpdated(const FGameplayTag InTag, int32 Count);
+
+	bool bIsPawnDeath = false;
 
 	const float NumberUnLimit = TNumericLimits<float>::Max();
 };

@@ -8,6 +8,7 @@
 #include "GenericTeamAgentInterface.h"
 #include "CCharacterBase.generated.h"
 
+struct FGameplayEventData;
 struct FGameplayTag;
 class UWidgetComponent;
 class UCAttributeSet;
@@ -34,6 +35,10 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SendGameplayEventToSelf(const FGameplayTag& EventTag, const FGameplayEventData& EventData);
+	
 	/** 네트워크 복제에 사용되는 프로퍼티를 반환. 네이티브 복제 프로퍼티를 가진 모든 액터 클래스는 이 함수를 재정의 해야함. */
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
@@ -60,6 +65,7 @@ private:
 
 	void BindGasChangeDelegates();
 	void DeathTagUpdated(const FGameplayTag Tag, int32 NewCount);
+	void StunTagUpdated(const FGameplayTag Tag, int32 NewCount);
 	
 #pragma endregion
 
@@ -84,10 +90,10 @@ private:
 
 #pragma region Death And Respawn
 	
-	UPROPERTY(EditDefaultsOnly, Category = "Death")
+	UPROPERTY(EditDefaultsOnly, Category = "Animation | Death")
 	UAnimMontage* DeathMontage;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Death")
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	float DeathMontageFinishTimerShift = -0.8f;
 
 	void Respawn();
@@ -111,6 +117,16 @@ private:
 	void SetAIPerceptionStimuliSourceEnable(bool bIsEnabled);
 	
 #pragma endregion
+
+#pragma region Stun
+
+	UPROPERTY(EditDefaultsOnly, Category = "Animation | Stun")
+	TObjectPtr<UAnimMontage> StunMontage;
+
+	virtual void OnStun();
+	virtual void OnRecoverFromStun();
+
+#pragma endregion 
 
 	
 	UPROPERTY(ReplicatedUsing = OnRep_TeamID)

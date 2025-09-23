@@ -6,6 +6,7 @@
 namespace CGameplayTags
 {
 	UE_DEFINE_GAMEPLAY_TAG(Ability_BasicAttack, "Ability.BasicAttack");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_BasicAttack_Pressed, "Ability.BasicAttack.Pressed");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Combo_Change, "Ability.Combo.Change");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Combo_Change_Combo01, "Ability.Combo.Change.Combo01");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Combo_Change_Combo02, "Ability.Combo.Change.Combo02");

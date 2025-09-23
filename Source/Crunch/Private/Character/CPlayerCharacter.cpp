@@ -3,12 +3,15 @@
 
 #include "Public/Characters/CPlayerCharacter.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "CGameplayTags.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GAS/CAbilitySystemComponent.h"
 
 // ACPlayerCharacter::ACPlayerCharacter(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 ACPlayerCharacter::ACPlayerCharacter()
@@ -56,20 +59,80 @@ void ACPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	}
 }
 
-void ACPlayerCharacter::OnDead()
+void ACPlayerCharacter::OnAttackHitBoxOverlap(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex,
+	bool bFromSweep,
+	const FHitResult& SweepResult
+)
 {
-	if (APlayerController* PlayerController = GetController<APlayerController>())
+	if (!HasAuthority() || !OtherActor)
+	{
+		return;
+	}
+
+	// 자기 자신은 무시
+	if (OtherActor == this)
+	{
+		return;
+	}
+	
+	if (IGenericTeamAgentInterface* OwnerTeamInterface = Cast<IGenericTeamAgentInterface>(this))
+	{
+		// OtherActor에 대한 이 캐릭터의 팀 관계를 확인
+		ETeamAttitude::Type Attitude = OwnerTeamInterface->GetTeamAttitudeTowards(*OtherActor);
+       
+		// 적대적(Hostile) 관계가 아니라면 무시
+		if (Attitude != ETeamAttitude::Hostile)
+		{
+			return;
+		}
+	}
+}
+
+void ACPlayerCharacter::SetInputEnableFromPlayerController(const bool bEnable)
+{
+	APlayerController* PlayerController = GetController<APlayerController>();
+	if (!PlayerController)
+	{
+		return;
+	}
+	
+	if (bEnable)
+	{
+		EnableInput(PlayerController);
+	}
+	else
 	{
 		DisableInput(PlayerController);
 	}
 }
 
+void ACPlayerCharacter::OnDead()
+{
+	SetInputEnableFromPlayerController(bDisableInput);
+}
+
 void ACPlayerCharacter::OnRespawn()
 {
-	if (APlayerController* PlayerController = GetController<APlayerController>())
+	SetInputEnableFromPlayerController(bEnableInput);
+}
+
+void ACPlayerCharacter::OnStun()
+{
+	SetInputEnableFromPlayerController(bDisableInput);
+}
+
+void ACPlayerCharacter::OnRecoverFromStun()
+{
+	if (IsDead())
 	{
-		EnableInput(PlayerController);
+		return;
 	}
+	
+	SetInputEnableFromPlayerController(bEnableInput);
 }
 
 void ACPlayerCharacter::HandleLoopInput(const FInputActionValue& InputActionValue)
@@ -98,6 +161,12 @@ void ACPlayerCharacter::HandleAbilityInput(const FInputActionValue& InputActionV
 	else
 	{
 		GetAbilitySystemComponent()->AbilityLocalInputReleased(static_cast<int32>(InputID));
+	}
+	
+	if (InputID == EAbilityInputID::BasicAttack)
+	{
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, CGameplayTags::Ability_BasicAttack_Pressed, FGameplayEventData());
+		Server_SendGameplayEventToSelf(CGameplayTags::Ability_BasicAttack_Pressed, FGameplayEventData());
 	}
 }
 
